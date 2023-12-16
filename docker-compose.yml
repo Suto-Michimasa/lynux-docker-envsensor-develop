@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  telegraf:
+    image: telegraf:1.7
+    restart: always
+    extra_hosts:
+      - "ubi-lynx-db.naist.jp:192.168.1.11"
+    ports:
+      - "8086:8086"
+    env_file: .env
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+  app:
+    build: ./app
+    restart: always
+    volumes:
+      - ./app:/usr/src/app
+    env_file: .env
+    privileged: true
+    network_mode: "host"
