@@ -1,6 +1,10 @@
-#!/usr/bin/python
+#!/home/suto/.pyenv/shims/python  python
 
 import os
+from dotenv import load_dotenv
+
+dotenv_path = '../.env'
+load_dotenv(dotenv_path)
 
 # envsensor_observer configuration ############################################
 
@@ -8,14 +12,14 @@ import os
 BT_DEV_ID = 0
 
 # time interval for sensor status evaluation (sec.)
-CHECK_SENSOR_STATE_INTERVAL_SECONDS = 300
+CHECK_SENSOR_STATE_INTERVAL_SECONDS = 20
 INACTIVE_TIMEOUT_SECONDS = 60
 # Sensor will be inactive state if there is no advertising data received in
 # this timeout period.
 
 
 # csv output to local file system
-CSV_OUTPUT = False
+CSV_OUTPUT = True
 # the directory path for csv output
 CSV_DIR_PATH = os.path.dirname(os.path.abspath(__file__)) + "/log"
 
@@ -37,9 +41,9 @@ FLUENTD_INFLUXDB_DATABASE = "xxxxxxxx"  # enter influxDB database name
 # uploading data to the cloud (required influxDB 0.9 or higher)
 INFLUXDB_OUTPUT = True
 # InfluxDB
-INFLUXDB_ADDRESS = "127.0.0.1"  # enter IP address of influxDB
-INFLUXDB_PORT = 8086  # enter port number of influxDB
-INFLUXDB_DATABASE = "lynx"  # enter influxDB database name
-INFLUXDB_MEASUREMENT = "envsensor"  # enter measurement name
-INFLUXDB_USER = os.environ.get('INFLUXDB_USERNAME')  # enter influxDB username
-INFLUXDB_PASSWORD = os.environ.get('INFLUXDB_PASSWORD')  # enter influxDB user password
+INFLUXDB_URL = "http://172.16.4.124:8086"
+INFLUXDB_BUCKET = "omron"  # enter influxDB database name
+INFLUXDB_TOKEN = os.environ.get("INFLUXDB_TOKEN")  # enter measurement name
+INFLUXDB_ORG="humanophilic"
+INFLUXDB_USER = os.getenv("INFLUXDB_USERNAME")  # enter influxDB username
+INFLUXDB_PASSWORD = os.getenv("INFLUXDB_PASSWORD")  # enter influxDB user password
