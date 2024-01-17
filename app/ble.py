@@ -551,35 +551,36 @@ def reset_hci():
 
 
 def get_companyid(pkt):
-    return (struct.unpack("<B", pkt[1])[0] << 8) | \
-        struct.unpack("<B", pkt[0])[0]
+    return (struct.unpack("<B", pkt[1:2])[0] << 8) | \
+        struct.unpack("<B", pkt[0:1])[0]
 
 
 # verify received beacon packet format
 def verify_beacon_packet(report):
     result = False
     # check payload length (31byte)
+    address = report["peer_bluetooth_address"]
     if (report["report_metadata_length"] != 31):
         return result
     # check Company ID (OMRON = 0x02D5)
-    if (struct.unpack("<B", report["payload_binary"][4])[0] !=
+    if (struct.unpack("<B", report["payload_binary"][4:5])[0] !=
             ADV_TYPE_MANUFACTURER_SPECIFIC_DATA):
         return result
     if (get_companyid(report["payload_binary"][5:7]) != COMPANY_ID):
         return result
     # check shortened local name
-    if (struct.unpack("<B", report["payload_binary"][28])[0] ==
+    if (struct.unpack("<B", report["payload_binary"][28:29])[0] ==
             ADV_TYPE_SHORT_LOCAL_NAME):
         if ((report["payload_binary"][29:31] == "IM") or
                 (report["payload_binary"][29:31] == "EP")):
             pass
         else:
             return result
-    elif (struct.unpack("<B", report["payload_binary"][27])[0] ==
+    elif (struct.unpack("<B", report["payload_binary"][27:28])[0] ==
             ADV_TYPE_SHORT_LOCAL_NAME):
-        if ((report["payload_binary"][28:31] == "Rbt") and
-            ((struct.unpack("<B", report["payload_binary"][7])[0] == 0x01) or
-             (struct.unpack("<B", report["payload_binary"][7])[0] == 0x02))):
+        if ((report["payload_binary"][28:31].decode("utf-8") == "Rbt") and
+            ((struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x01) or
+             (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x02))):
             pass
         else:
             return result
@@ -592,22 +593,22 @@ def verify_beacon_packet(report):
 
 # classify beacon type sent from the sensor
 def classify_beacon_packet(report):
-    if (report["payload_binary"][29:31] == "IM"):
+    if (report["payload_binary"][29:31].decode("utf-8") == "IM"):
         return "IM"
-    elif (report["payload_binary"][29:31] == "EP"):
+    elif (report["payload_binary"][29:31].decode("utf-8") == "EP"):
         return "EP"
-    elif (report["payload_binary"][28:31] == "Rbt"):
-        if (struct.unpack("<B", report["payload_binary"][7])[0] == 0x01):
+    elif (report["payload_binary"][28:31].decode("utf-8") == "Rbt"):
+        if (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x01):
             return "Rbt 0x01"
-        elif (struct.unpack("<B", report["payload_binary"][7])[0] == 0x02):
+        elif (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x02):
             return "Rbt 0x02"
-        elif (struct.unpack("<B", report["payload_binary"][7])[0] == 0x03):
+        elif (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x03):
             return "Rbt 0x03"
-        elif (struct.unpack("<B", report["payload_binary"][7])[0] == 0x04):
+        elif (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x04):
             return "Rbt 0x04"
-        elif (struct.unpack("<B", report["payload_binary"][7])[0] == 0x05):
+        elif (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x05):
             return "Rbt 0x05"
-        elif (struct.unpack("<B", report["payload_binary"][7])[0] == 0x06):
+        elif (struct.unpack("<B", report["payload_binary"][7:8])[0] == 0x06):
             return "Rbt 0x06"
     else:
         return "UNKNOWN"

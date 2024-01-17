@@ -49,29 +49,29 @@ class SensorBeacon:
         self.bt_address = bt_address_s
 
         if ((sensor_type_s == "IM") or (sensor_type_s == "EP")):
-            self.seq_num = str_util.c2B(pkt[7])
+            self.seq_num = str_util.c2B(pkt[7:8])
 
             self.val_temp = str_util.bytes2short(
-                str_util.c2B(pkt[9]), str_util.c2B(pkt[8])) / 100.0
+                str_util.c2B(pkt[9:10]), str_util.c2B(pkt[8:9])) / 100.0
             self.val_humi = str_util.bytes2ushort(
-                str_util.c2B(pkt[11]), str_util.c2B(pkt[10])) / 100.0
+                str_util.c2B(pkt[11:12]), str_util.c2B(pkt[10:11])) / 100.0
             self.val_light = str_util.bytes2ushort(
-                str_util.c2B(pkt[13]), str_util.c2B(pkt[12]))
+                str_util.c2B(pkt[13:14]), str_util.c2B(pkt[12:13]))
             self.val_uv = str_util.bytes2ushort(
-                str_util.c2B(pkt[15]), str_util.c2B(pkt[14])) / 100.0
+                str_util.c2B(pkt[15:16]), str_util.c2B(pkt[14:15])) / 100.0
             self.val_pressure = str_util.bytes2ushort(
-                str_util.c2B(pkt[17]), str_util.c2B(pkt[16])) / 10.0
+                str_util.c2B(pkt[17:18]), str_util.c2B(pkt[16:17])) / 10.0
             self.val_noise = str_util.bytes2ushort(
-                str_util.c2B(pkt[19]), str_util.c2B(pkt[18])) / 100.0
+                str_util.c2B(pkt[19:20]), str_util.c2B(pkt[18:19])) / 100.0
             self.val_battery = (str_util.c2B(pkt[26]) + 100) * 10.0
 
             if sensor_type_s == "IM":
                 self.val_ax = str_util.bytes2short(
-                    str_util.c2B(pkt[21]), str_util.c2B(pkt[20])) / 10.0
+                    str_util.c2B(pkt[21:22]), str_util.c2B(pkt[20:21])) / 10.0
                 self.val_ay = str_util.bytes2short(
-                    str_util.c2B(pkt[23]), str_util.c2B(pkt[22])) / 10.0
+                    str_util.c2B(pkt[23:24]), str_util.c2B(pkt[22:23])) / 10.0
                 self.val_az = str_util.bytes2short(
-                    str_util.c2B(pkt[25]), str_util.c2B(pkt[24])) / 10.0
+                    str_util.c2B(pkt[25:26]), str_util.c2B(pkt[24:25])) / 10.0
                 self.val_di = 0.0
                 self.val_heat = 0.0
                 self.calc_factor()
@@ -80,9 +80,9 @@ class SensorBeacon:
                 self.val_ay = 0.0
                 self.val_az = 0.0
                 self.val_di = str_util.bytes2short(
-                    str_util.c2B(pkt[21]), str_util.c2B(pkt[20])) / 100.0
+                    str_util.c2B(pkt[21:22]), str_util.c2B(pkt[20:21])) / 100.0
                 self.val_heat = str_util.bytes2short(
-                    str_util.c2B(pkt[23]), str_util.c2B(pkt[22])) / 100.0
+                    str_util.c2B(pkt[23:24]), str_util.c2B(pkt[22:23])) / 100.0
             else:
                 self.val_ax = 0.0
                 self.val_ay = 0.0
@@ -91,51 +91,52 @@ class SensorBeacon:
                 self.val_heat = 0.0
                 self.calc_factor()
         else:  # Rbt
-            self.seq_num = str_util.c2B(pkt[8])
+            self.seq_num = str_util.c2B(pkt[8:9])
             if (sensor_type_s == "Rbt 0x01"):
                 self.val_temp = str_util.bytes2short(
-                    str_util.c2B(pkt[10]), str_util.c2B(pkt[9])) / 100.0
+                    str_util.c2B(pkt[10:11]), str_util.c2B(pkt[9:10])) / 100.0
                 self.val_humi = str_util.bytes2ushort(
-                    str_util.c2B(pkt[12]), str_util.c2B(pkt[11])) / 100.0
+                    str_util.c2B(pkt[12:13]), str_util.c2B(pkt[11:12])) / 100.0
                 self.val_light = str_util.bytes2ushort(
-                    str_util.c2B(pkt[14]), str_util.c2B(pkt[13]))
+                    str_util.c2B(pkt[14:15]), str_util.c2B(pkt[13:14]))
                 self.val_pressure = str_util.bytes2uint32(
-                    str_util.c2B(pkt[18]), str_util.c2B(pkt[17]),
-                    str_util.c2B(pkt[16]), str_util.c2B(pkt[15])) / 1000.0
+                    str_util.c2B(pkt[18:19]), str_util.c2B(pkt[17:18]),
+                    str_util.c2B(pkt[16:17]), str_util.c2B(pkt[15:16])) / 1000.0
                 self.val_noise = str_util.bytes2ushort(
-                    str_util.c2B(pkt[20]), str_util.c2B(pkt[19])) / 100.0
+                    str_util.c2B(pkt[20:21]), str_util.c2B(pkt[19:20])) / 100.0
                 self.val_etvoc = str_util.bytes2ushort(
-                    str_util.c2B(pkt[22]), str_util.c2B(pkt[21]))
+                    str_util.c2B(pkt[22:23]), str_util.c2B(pkt[21:22]))
                 self.val_eco2 = str_util.bytes2ushort(
-                    str_util.c2B(pkt[24]), str_util.c2B(pkt[23]))
+                    str_util.c2B(pkt[24:25]), str_util.c2B(pkt[23:24]))
                 self.calc_factor()
             elif (sensor_type_s == "Rbt 0x02"):
                 self.val_di = str_util.bytes2short(
-                    str_util.c2B(pkt[10]), str_util.c2B(pkt[9])) / 100.0
+                    str_util.c2B(pkt[10:11]), str_util.c2B(pkt[9:10])) / 100.0
                 self.val_heat = str_util.bytes2short(
-                    str_util.c2B(pkt[12]), str_util.c2B(pkt[11])) / 100.0
+                    str_util.c2B(pkt[12:13]), str_util.c2B(pkt[11:12])) / 100.0
                 self.val_si = str_util.bytes2ushort(
-                    str_util.c2B(pkt[15]), str_util.c2B(pkt[14])) / 10.0
+                    str_util.c2B(pkt[15:16]), str_util.c2B(pkt[14:15])) / 10.0
                 self.val_pga = str_util.bytes2ushort(
-                    str_util.c2B(pkt[17]), str_util.c2B(pkt[16])) / 10.0
+                    str_util.c2B(pkt[17:18]), str_util.c2B(pkt[16:17])) / 10.0
                 self.val_seismic = str_util.bytes2ushort(
-                    str_util.c2B(pkt[19]), str_util.c2B(pkt[18])) / 1000.0
+                    str_util.c2B(pkt[19:20]), str_util.c2B(pkt[18:19])) / 1000.0
                 self.val_ax = str_util.bytes2short(
-                    str_util.c2B(pkt[21]), str_util.c2B(pkt[20])) / 10.0
+                    str_util.c2B(pkt[21:22]), str_util.c2B(pkt[20:21])) / 10.0
                 self.val_ay = str_util.bytes2short(
-                    str_util.c2B(pkt[23]), str_util.c2B(pkt[22])) / 10.0
+                    str_util.c2B(pkt[23:24]), str_util.c2B(pkt[22:23])) / 10.0
                 self.val_az = str_util.bytes2short(
-                    str_util.c2B(pkt[25]), str_util.c2B(pkt[24])) / 10.0
-                if (str_util.c2B(pkt[13]) == 0x00):
+                    str_util.c2B(pkt[25:26]), str_util.c2B(pkt[24:25])) / 10.0
+                if (str_util.c2B(pkt[13:14]) == 0x00):
                     self.vibinfo = "NONE"
-                elif (str_util.c2B(pkt[13]) == 0x01):
+                elif (str_util.c2B(pkt[13:14]) == 0x01):
                     self.vibinfo = "VIBRATION"
-                elif (str_util.c2B(pkt[13]) == 0x02):
+                elif (str_util.c2B(pkt[13:14]) == 0x02):
                     self.vibinfo = "EARTHQUAKE"
                 else:
                     pass
 
-        self.rssi = str_util.c2b(pkt[-1])
+
+        self.rssi = str_util.c2b(pkt[-1:])
         self.distance = self.return_accuracy(
             self.rssi, ble.BEACON_MEASURED_POWER)
 
@@ -253,7 +254,7 @@ class SensorBeacon:
         # direct data upload to influxDB
         json_body = [
             {
-                "measurement": conf.INFLUXDB_MEASUREMENT,
+                "measurement": conf.INFLUXDB_BUCKET,
                 "tags": {
                     "gateway": self.gateway,
                     "sensor_type": self.sensor_type,
