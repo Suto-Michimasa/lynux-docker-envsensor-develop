@@ -43,7 +43,7 @@ class SensorBeacon:
 
     flag_active = False
 
-    sensor_type = "UNKNOWN"
+    sensor_type = "UNKNOWN" 
     gateway = "UNKNOWN"
 
     def __init__(self, bt_address_s, sensor_type_s, gateway_s, pkt):
@@ -252,26 +252,21 @@ class SensorBeacon:
             'distance': self.distance
         })
 
-    def upload_influxdb(self, write_api):
+    def upload_influxdb(self, data_points):
         # direct data upload to influxDB
         point = (
             Point(conf.INFLUXDB_MEASUREMENT)
-            .tag("gateway", self.gateway)
             .tag("sensor_type", self.sensor_type)
             .tag("bt_address", self.bt_address)
-            .field("temperature", self.val_temp)
-            .field("light", self.val_light)
             .field("noise", self.val_noise)
             .time(self.tick_last_update, WritePrecision.NS)
         )
-        try:
-            print(self.tick_last_update, self.bt_address,self.val_noise)
-            write_api.write(bucket=conf.INFLUXDB_BUCKET , org=conf.INFLUXDB_ORG, record=point)
-        except InfluxDBError as e:
-            if e.respose.status == 401:
-                raise Exception(f"Insufficient permissions to write to InfluxDB bucket {conf.INFLUXDB_BUCKET}") from e
-        except Exception as e:
-            print(f"Exception: {e}") 
+        # data_pointsの長さを出力
+        if len(data_points) > 0:
+            print(data_points[len(data_points)-1])
+        # データポイントをリストに追加
+        data_points.append(point)
+        
 
     def debug_print(self):
         print ("\tgateway = ", self.gateway)

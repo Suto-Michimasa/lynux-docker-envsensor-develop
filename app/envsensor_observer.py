@@ -49,9 +49,10 @@ influx_client = None
 write_api = None
 sensor_list = []
 flag_update_sensor_status = False
+data_points = []
+batch_upload_timer = None
 
-
-def parse_events(sock, loop_count=10):
+def parse_events(sock):
     global sensor_list
 
     pkt = sock.recv(255)
@@ -126,29 +127,17 @@ def parse_events(sock, loop_count=10):
 
                 if (index != -1):  # BT Address found in sensor_list
                     if sensor.check_diff_seq_num(sensor_list[index]):
-                        handling_data(sensor)
+                       sensor.upload_influxdb(data_points)
                     sensor.update(sensor_list[index])
                 else:  # new SensorBeacon
                     sensor_list.append(sensor)
-                    handling_data(sensor)
+                    sensor.upload_influxdb(data_points)
                 lock.release()
             else:
                 pass
     else:
         pass
     return
-
-
-# data handling
-def handling_data(sensor):
-    if conf.INFLUXDB_OUTPUT:
-        sensor.upload_influxdb(write_api)
-                                                                               
-    if conf.FLUENTD_FORWARD:
-        sensor.forward_fluentd(event)
-    if conf.CSV_OUTPUT:
-        log.info(sensor.csv_format())
-
 
 # check timeout sensor and update flag
 def eval_sensor_state():
@@ -214,8 +203,6 @@ def init_fluentd():
     sender.setup(conf.FLUENTD_TAG, host=conf.FLUENTD_ADDRESS,
                  port=conf.FLUENTD_PORT)
 
-
-# todo:確認
 # create database on influxdb
 def create_influx_database():
     v = "q=CREATE DATABASE " + conf.FLUENTD_INFLUXDB_DATABASE + "\n"
@@ -237,11 +224,23 @@ def arg_parse():
     return args
 
 
+# バッチアップロード用のタイマーを設定（例：10秒ごと）
+def upload_influxdb_batch(write_api):
+    global data_points
+    print("upload_influxdb_batch")
+    if data_points:
+        write_api.write(bucket=conf.INFLUXDB_BUCKET, org=conf.INFLUXDB_ORG, record=data_points)
+        data_points = []
+    # タイマーをリセットして再開始
+    batch_upload_timer = threading.Timer(10, upload_influxdb_batch, [write_api])
+    batch_upload_timer.setDaemon(True)
+    batch_upload_timer.start()
+
 # main function
 if __name__ == "__main__":
     try:
         flag_scanning_started = False
-
+        
         # process command line arguments
         debug = False
         args = arg_parse()
@@ -318,6 +317,11 @@ if __name__ == "__main__":
             print ("error initializing csv output interface")
             print (str(e))
             sys.exit(1)
+        # バッチアップロード用のタイマーを設定（例：10秒ごと）
+        if batch_upload_timer is None:
+            batch_upload_timer = threading.Timer(10, upload_influxdb_batch, [write_api])
+            batch_upload_timer.setDaemon(True)
+            batch_upload_timer.start()
 
         # initialize bluetooth socket
         try:
