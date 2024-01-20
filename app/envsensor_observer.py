@@ -46,6 +46,7 @@ GATEWAY = socket.gethostname()
 
 # Global variables
 influx_client = None
+write_api = None
 sensor_list = []
 flag_update_sensor_status = False
 
@@ -141,7 +142,8 @@ def parse_events(sock, loop_count=10):
 # data handling
 def handling_data(sensor):
     if conf.INFLUXDB_OUTPUT:
-        sensor.upload_influxdb(influx_client)
+        sensor.upload_influxdb(write_api)
+                                                                               
     if conf.FLUENTD_FORWARD:
         sensor.forward_fluentd(event)
     if conf.CSV_OUTPUT:
@@ -213,6 +215,7 @@ def init_fluentd():
                  port=conf.FLUENTD_PORT)
 
 
+# todo:確認
 # create database on influxdb
 def create_influx_database():
     v = "q=CREATE DATABASE " + conf.FLUENTD_INFLUXDB_DATABASE + "\n"
@@ -263,6 +266,7 @@ if __name__ == "__main__":
                 if debug:
                     print ("-- initialize influxDB interface")
                 influx_client = InfluxDBClient(url=conf.INFLUXDB_URL, token=conf.INFLUXDB_TOKEN, org=conf.INFLUXDB_ORG)
+                write_api = influx_client.write_api(write_options=SYNCHRONOUS)
                 if debug:
                     print ("-- initialize influxDB interface : success")
         except Exception as e:
@@ -389,6 +393,8 @@ if __name__ == "__main__":
 
     finally:
         if flag_scanning_started:
+            print("Stopping scan...")
+            influx_client.close()
             # restore old filter setting
             sock.setsockopt(ble.bluez.SOL_HCI, ble.bluez.HCI_FILTER,
                             old_filter)

@@ -19,7 +19,7 @@ INACTIVE_TIMEOUT_SECONDS = 60
 
 
 # csv output to local file system
-CSV_OUTPUT = True
+CSV_OUTPUT = False
 # the directory path for csv output
 CSV_DIR_PATH = os.path.dirname(os.path.abspath(__file__)) + "/log"
 
@@ -41,9 +41,10 @@ FLUENTD_INFLUXDB_DATABASE = "xxxxxxxx"  # enter influxDB database name
 # uploading data to the cloud (required influxDB 0.9 or higher)
 INFLUXDB_OUTPUT = True
 # InfluxDB
-INFLUXDB_URL = "http://172.16.4.124:8086"
+INFLUXDB_URL = "http://172.16.4.127:8086"
 INFLUXDB_BUCKET = "omron"  # enter influxDB database name
 INFLUXDB_TOKEN = os.environ.get("INFLUXDB_TOKEN")  # enter measurement name
+INFLUXDB_MEASUREMENT = "sensor_data"  
 INFLUXDB_ORG="humanophilic"
 INFLUXDB_USER = os.getenv("INFLUXDB_USERNAME")  # enter influxDB username
 INFLUXDB_PASSWORD = os.getenv("INFLUXDB_PASSWORD")  # enter influxDB user password

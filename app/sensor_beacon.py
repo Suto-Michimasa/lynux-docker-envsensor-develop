@@ -6,7 +6,8 @@ import datetime
 
 import str_util
 import ble
-
+from influxdb_client import WritePrecision, Point
+from influxdb_client.client.exceptions import InfluxDBError
 
 # Env Senor (OMRON 2JCIE-BL01 Broadcaster) ####################################
 
@@ -46,6 +47,7 @@ class SensorBeacon:
     gateway = "UNKNOWN"
 
     def __init__(self, bt_address_s, sensor_type_s, gateway_s, pkt):
+
         self.bt_address = bt_address_s
 
         if ((sensor_type_s == "IM") or (sensor_type_s == "EP")):
@@ -250,41 +252,26 @@ class SensorBeacon:
             'distance': self.distance
         })
 
-    def upload_influxdb(self, client_influxdb):
+    def upload_influxdb(self, write_api):
         # direct data upload to influxDB
-        json_body = [
-            {
-                "measurement": conf.INFLUXDB_BUCKET,
-                "tags": {
-                    "gateway": self.gateway,
-                    "sensor_type": self.sensor_type,
-                    "bt_address": self.bt_address
-                },
-                "fields": {
-                    "temperature": self.val_temp,
-                    "humidity": self.val_humi,
-                    "light": self.val_light,
-                    "uv": self.val_uv,
-                    "pressure": self.val_pressure,
-                    "noise": self.val_noise,
-                    "di": self.val_di,
-                    "heat": self.val_heat,
-                    "accel_x": self.val_ax,
-                    "accel_y": self.val_ay,
-                    "accel_z": self.val_az,
-                    "etvoc": self.val_etvoc,
-                    "eco2": self.val_eco2,
-                    "si": self.val_si,
-                    "pga": self.val_pga,
-                    "seismic": self.val_seismic,
-                    "vibinfo": self.vibinfo,
-                    "battery": self.val_battery,
-                    "rssi": self.rssi,
-                    "distance": self.distance
-                }
-            }
-        ]
-        client_influxdb.write_points(json_body)
+        point = (
+            Point(conf.INFLUXDB_MEASUREMENT)
+            .tag("gateway", self.gateway)
+            .tag("sensor_type", self.sensor_type)
+            .tag("bt_address", self.bt_address)
+            .field("temperature", self.val_temp)
+            .field("light", self.val_light)
+            .field("noise", self.val_noise)
+            .time(self.tick_last_update, WritePrecision.NS)
+        )
+        try:
+            print(self.tick_last_update, self.bt_address,self.val_noise)
+            write_api.write(bucket=conf.INFLUXDB_BUCKET , org=conf.INFLUXDB_ORG, record=point)
+        except InfluxDBError as e:
+            if e.respose.status == 401:
+                raise Exception(f"Insufficient permissions to write to InfluxDB bucket {conf.INFLUXDB_BUCKET}") from e
+        except Exception as e:
+            print(f"Exception: {e}") 
 
     def debug_print(self):
         print ("\tgateway = ", self.gateway)
