@@ -27,6 +27,10 @@ import sensor_beacon as envsensor
 import conf
 import ble
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+
 if conf.CSV_OUTPUT:
     import logging
     import csv_logger
@@ -37,9 +41,10 @@ if conf.INFLUXDB_OUTPUT:
     import influxdb_client
     from influxdb_client import InfluxDBClient, Point, WritePrecision
     from influxdb_client.client.write_api import SYNCHRONOUS
-
+    from influxdb_client.client.exceptions import InfluxDBError
 # constant
 VER = 1.2
+upload_interval = 10
 
 # ystem constant
 GATEWAY = socket.gethostname()
@@ -51,6 +56,7 @@ sensor_list = []
 flag_update_sensor_status = False
 data_points = []
 batch_upload_timer = None
+latest_data = {}
 
 def parse_events(sock):
     global sensor_list
@@ -127,11 +133,11 @@ def parse_events(sock):
 
                 if (index != -1):  # BT Address found in sensor_list
                     if sensor.check_diff_seq_num(sensor_list[index]):
-                       sensor.upload_influxdb(data_points)
+                       sensor.upload_influxdb(data_points=data_points, latest_data=latest_data)
                     sensor.update(sensor_list[index])
                 else:  # new SensorBeacon
                     sensor_list.append(sensor)
-                    sensor.upload_influxdb(data_points)
+                    sensor.upload_influxdb(data_points=data_points, latest_data=latest_data)
                 lock.release()
             else:
                 pass
@@ -224,15 +230,33 @@ def arg_parse():
     return args
 
 
-# バッチアップロード用のタイマーを設定（例：10秒ごと）
+# バッチアップロード用の関数
 def upload_influxdb_batch(write_api):
     global data_points
     print("upload_influxdb_batch")
     if data_points:
-        write_api.write(bucket=conf.INFLUXDB_BUCKET, org=conf.INFLUXDB_ORG, record=data_points)
+        try:
+            write_api.write(bucket=conf.INFLUXDB_BUCKET, org=conf.INFLUXDB_ORG, record=data_points)
+        except InfluxDBError as e:
+            if e.respose.status == 401:
+                raise Exception(f"Insufficient permissions to write to InfluxDB bucket {conf.INFLUXDB_BUCKET}") from e
+        except Exception as e:
+            print(f"Exception: {e}") 
         data_points = []
+
+    update_data = {}
+    for address, data in latest_data.items():
+        update_path = f"sensor_data/{address}"
+        update_data[update_path] = data
+
+    try:
+        db.reference().update(update_data)
+        print("All latest_data uploaded to Firebase")
+    except Exception as e:
+        print(f"Firebase update exception: {e}")
+        print("latest_data", latest_data)
     # タイマーをリセットして再開始
-    batch_upload_timer = threading.Timer(10, upload_influxdb_batch, [write_api])
+    batch_upload_timer = threading.Timer(upload_interval, upload_influxdb_batch, [write_api])
     batch_upload_timer.setDaemon(True)
     batch_upload_timer.start()
 
@@ -317,9 +341,26 @@ if __name__ == "__main__":
             print ("error initializing csv output interface")
             print (str(e))
             sys.exit(1)
+
+        # initialize firebase
+        if conf.FIREBASE_ENABLE:  # Firebaseを使用するかどうかの設定
+            try:
+                print(conf.FIREBASE_CREDENTIALS_PATH)
+                print(conf.FIREBASE_DB_URL)
+                cred = credentials.Certificate(conf.FIREBASE_CREDENTIALS_PATH)
+                firebase_admin.initialize_app(cred, {
+                    'databaseURL': conf.FIREBASE_DB_URL
+                })
+                if debug:
+                    print("-- initialize Firebase Admin SDK: success")
+            except Exception as e:
+                print("Error initializing Firebase Admin SDK")
+                print(str(e))
+                sys.exit(1)
+
         # バッチアップロード用のタイマーを設定（例：10秒ごと）
         if batch_upload_timer is None:
-            batch_upload_timer = threading.Timer(10, upload_influxdb_batch, [write_api])
+            batch_upload_timer = threading.Timer(upload_interval, upload_influxdb_batch, [write_api])
             batch_upload_timer.setDaemon(True)
             batch_upload_timer.start()
 

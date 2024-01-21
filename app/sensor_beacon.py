@@ -7,7 +7,7 @@ import datetime
 import str_util
 import ble
 from influxdb_client import WritePrecision, Point
-from influxdb_client.client.exceptions import InfluxDBError
+
 
 # Env Senor (OMRON 2JCIE-BL01 Broadcaster) ####################################
 
@@ -252,7 +252,7 @@ class SensorBeacon:
             'distance': self.distance
         })
 
-    def upload_influxdb(self, data_points):
+    def upload_influxdb(self, data_points, latest_data):
         # direct data upload to influxDB
         point = (
             Point(conf.INFLUXDB_MEASUREMENT)
@@ -261,11 +261,15 @@ class SensorBeacon:
             .field("noise", self.val_noise)
             .time(self.tick_last_update, WritePrecision.NS)
         )
-        # data_pointsの長さを出力
-        if len(data_points) > 0:
-            print(data_points[len(data_points)-1])
         # データポイントをリストに追加
         data_points.append(point)
+
+        # 最新データを更新
+        address = self.bt_address
+        latest_data[address] = {
+            "noise": self.val_noise,
+            "time" :  self.tick_last_update.isoformat()
+        }
         
 
     def debug_print(self):

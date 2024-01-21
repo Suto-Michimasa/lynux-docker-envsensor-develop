@@ -44,7 +44,11 @@ INFLUXDB_OUTPUT = True
 INFLUXDB_URL = "http://localhost:8086"
 INFLUXDB_BUCKET = "omron"  # enter influxDB database name
 INFLUXDB_TOKEN = os.environ.get("INFLUXDB_TOKEN")  # enter measurement name
-INFLUXDB_MEASUREMENT = "batch_test3"  
+INFLUXDB_MEASUREMENT = "batch_test4"  
 INFLUXDB_ORG="humanophilic"
 INFLUXDB_USER = os.getenv("INFLUXDB_USERNAME")  # enter influxDB username
 INFLUXDB_PASSWORD = os.getenv("INFLUXDB_PASSWORD")  # enter influxDB user password
+
+FIREBASE_ENABLE = True
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
+FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
