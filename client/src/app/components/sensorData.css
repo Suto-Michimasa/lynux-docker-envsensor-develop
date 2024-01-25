@@ -1,0 +1,12 @@
+@keyframes textChange {
+  0% { color: red; }
+  100% { color: black; }
+}
+
+.animate-text-change {
+  animation: textChange 10s;
+}
+
+.sensor {
+  margin-top: 20px;
+}
