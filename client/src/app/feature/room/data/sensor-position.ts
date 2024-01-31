@@ -39,33 +39,44 @@ export const SensorPositions: SensorPosition[] = [
   ...createSensorPositions({
     count: 6,
     deltaX: 0.178,
-    sensorPositionNumber: 6,
+    sensorPositionNumber: 5,
     x1: 0.045,
     y: 0.28,
   }),
   
   // センサ番号11-15
   {
-    number: 12,
+    number: 11,
     x: 0.080,
     y: 0.63,
   },
 
   {
-    number: 13,
+    number: 12,
     x: 0.25,
     y: 0.63,
   },
 
   {
-    number: 14,
+    number: 13,
     x: 0.376,
     y: 0.63,
   },
 
   {
-    number: 15,
-    x: 0.565,
+    number: 14,
+    x: 0.57,
     y: 0.63,
+  },
+  
+  {
+    number: 15,
+    x: 0.81,
+    y: 0.67,
+  },
+  {
+    number: 16,
+    x: 0.010,
+    y: 0.45,
   },
 ];
