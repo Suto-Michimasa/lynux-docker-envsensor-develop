@@ -8,6 +8,6 @@ export const checkOnline = ({ sensorTime }: Props): boolean => {
   const now = new Date();
   const sensorTimeDate = parseISO(sensorTime);
   const diff = differenceInMinutes(now, sensorTimeDate);
-  if (diff <= 10) return true;
+  if (diff <= 1) return true;
   else return false;
 };

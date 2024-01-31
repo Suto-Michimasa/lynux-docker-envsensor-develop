@@ -7,6 +7,8 @@ import { AddressAndNumber } from "./data/address"
 import { ref, child, get } from "firebase/database";
 import { db } from "@/lib/firebase/firebase";
 import { getBackgroundColor, checkOnline } from "./logic";
+import Modal from './modal';
+import { format, parseISO } from 'date-fns';
 
 interface SensorData {
   [address: string]: {
@@ -17,11 +19,35 @@ interface SensorData {
 
 const LabCanvas: React.FC = () => {
   const [data, setData] = useState<SensorData>({});
+  const [open, setOpen] = useState(false);
+  const [selectedSensor, setSelectedSensor] = useState<{
+    address: string;
+    noise: number;
+    time: string;
+  } | null>(null);
+  // modalを展開した際に詳細データを表示する
+  const openModal = (address: string) => {
+    setOpen(true);
+    // addressに対応するデータを取得
+    const detail = data[address];
+    const time = detail?.time || '';
+    const formattedTime = format(parseISO(time), 'yyyy/MM/dd HH:mm:ss');
+    // データが存在する場合
+    if (detail) {
+      // データを表示する
+      setSelectedSensor({
+        address,
+        noise: detail.noise,
+        time: formattedTime,
+      });
+
+    }
+  }
 
   useEffect(() => {
     const fetchData = () => {
       const dbRef = ref(db);
-      get(child(dbRef, 'sensor_data')).then((snapshot) => {
+      get(child(dbRef, 'realtime_data')).then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           setData(data);
@@ -74,12 +100,13 @@ const LabCanvas: React.FC = () => {
         const circleColorClass = isOnline ? 'bg-green-500' : 'bg-red-500';
         return (
           <div
-            className={`absolute rounded-full bg-white  ${backgroundColorClass} w-10 h-10`}
+            className={`absolute rounded-full ${backgroundColorClass} w-10 h-10`}
             key={sensorNumber}
             style={{
               left: sensor.x * labImageSize.width,
               top: sensor.y * labImageSize.height,
             }}
+            onClick={() => openModal(address)}
           >
             <p className="absolute  text-center text-xs" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>{noise}</p>
             <div
@@ -89,6 +116,31 @@ const LabCanvas: React.FC = () => {
           </div>
         );
       })}
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <div className="flex flex-col gap-4">
+          <p className="text-xl">センサー詳細</p>
+          <hr className="border-t-solid border-1 border-grey" />
+          {selectedSensor ? (
+            <>
+              <p className="text-lg">番号: {selectedSensor.address}</p>
+              <p className="text-lg">時間: {selectedSensor.time}</p>
+              <p className="text-lg">音量: {selectedSensor.noise}</p>
+            </>
+          ) : (
+            <p className="text-lg">No sensor data available.</p>
+          )}
+          <hr className="border-t-solid border-1 border-grey" />
+          <div className="flex flex-row justify-center">
+            <button
+              className="border border-sky-300 rounded-lg py-1.5 px-10
+               bg-sky-500 hover:bg-sky-600 text-white"
+              onClick={() => setOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
