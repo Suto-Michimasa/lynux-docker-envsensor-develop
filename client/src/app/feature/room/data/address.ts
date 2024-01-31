@@ -3,7 +3,7 @@ export type addressToNumber = {
   address: string;
 };
 
-export const AddressToNumber: addressToNumber[] = [
+export const AddressAndNumber: addressToNumber[] = [
   {
     number: 1,
     address: 'D9CAF0E9789C',

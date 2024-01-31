@@ -1,7 +1,7 @@
 export type SensorPosition = {
   x: number;
   y: number;
-  number: number; // センサ番号
+  number: number; // マップ上のセンサ番号
 };
 
 type Option = {
