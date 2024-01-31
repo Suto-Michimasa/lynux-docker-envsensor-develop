@@ -44,7 +44,7 @@ if conf.INFLUXDB_OUTPUT:
     from influxdb_client.client.exceptions import InfluxDBError
 # constant
 VER = 1.2
-upload_interval = 10
+upload_interval = 20
 
 # ystem constant
 GATEWAY = socket.gethostname()
@@ -244,17 +244,22 @@ def upload_influxdb_batch(write_api):
             print(f"Exception: {e}") 
         data_points = []
 
-    update_data = {}
+    log_data = {}
+    realtime_data = {}
     for address, data in latest_data.items():
-        update_path = f"sensor_data/{address}"
-        update_data[update_path] = data
-
+        update_path = f"realtime_data/{address}"
+        realtime_data[update_path] = data
+    for address, data in latest_data.items():
+            timestamp = data["time"].replace(":", "-").replace(".", "-")  # または他の一意のタイムスタンプ
+            print(f"address: {address}, timestamp: {timestamp}")
+            update_path = f"log_data/{address}/{timestamp}"
+            log_data[update_path] = {"noise": data["noise"]}
     try:
-        db.reference().update(update_data)
-        print("All latest_data uploaded to Firebase")
+        db.reference().update(log_data)
+        db.reference().update(realtime_data)
+        print("All latest_data uploaded to Firebase with timestamps")
     except Exception as e:
         print(f"Firebase update exception: {e}")
-        print("latest_data", latest_data)
     # タイマーをリセットして再開始
     batch_upload_timer = threading.Timer(upload_interval, upload_influxdb_batch, [write_api])
     batch_upload_timer.setDaemon(True)
