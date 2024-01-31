@@ -37,7 +37,7 @@ export const SensorPositions: SensorPosition[] = [
 
   // センサ番号6-10
   ...createSensorPositions({
-    count: 7,
+    count: 6,
     deltaX: 0.178,
     sensorPositionNumber: 6,
     x1: 0.045,
@@ -46,25 +46,25 @@ export const SensorPositions: SensorPosition[] = [
   
   // センサ番号11-15
   {
-    number: 11,
+    number: 12,
     x: 0.080,
     y: 0.63,
   },
 
   {
-    number: 12,
+    number: 13,
     x: 0.25,
     y: 0.63,
   },
 
   {
-    number: 13,
+    number: 14,
     x: 0.376,
     y: 0.63,
   },
 
   {
-    number: 14,
+    number: 15,
     x: 0.565,
     y: 0.63,
   },
