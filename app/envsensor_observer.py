@@ -244,16 +244,35 @@ def upload_influxdb_batch(write_api):
             print(f"Exception: {e}") 
         data_points = []
 
+
     log_data = {}
     realtime_data = {}
-    for address, data in latest_data.items():
+    for address, data_list in latest_data.items():
+        if all(isinstance(data, list) for data in data_list):
+            # Calculate the average of noise values for each list in the data
+            avg_noise = [sum(data) / len(data) for data in data_list if data]
+        else:
+            # Calculate the average of the entire data list
+            avg_noise = sum(data_list) / len(data_list) if data_list else 0
+        current_time = datetime.datetime.now().isoformat()
         update_path = f"realtime_data/{address}"
-        realtime_data[update_path] = data
-    for address, data in latest_data.items():
-            timestamp = data["time"].replace(":", "-").replace(".", "-")  # または他の一意のタイムスタンプ
-            print(f"address: {address}, timestamp: {timestamp}")
-            update_path = f"log_data/{address}/{timestamp}"
-            log_data[update_path] = {"noise": data["noise"]}
+        realtime_data[update_path] = {
+            "noise": avg_noise,
+            "time": current_time
+        }
+    for address, data_list in latest_data.items():
+        if all(isinstance(data, list) for data in data_list):
+                # Calculate the average of noise values for each list in the data
+                avg_noise = [sum(data) / len(data) for data in data_list if data]
+        else:
+            # Calculate the average of the entire data list
+            avg_noise = sum(data_list) / len(data_list) if data_list else 0
+        current_time = datetime.datetime.now().isoformat()
+        timestamp = current_time.replace(":", "-").replace(".", "-")
+        update_path = f"log_data/{address}/{timestamp}"
+        log_data[update_path] = {"noise": avg_noise}
+
+    latest_data.clear()
     try:
         db.reference().update(log_data)
         db.reference().update(realtime_data)
@@ -264,6 +283,7 @@ def upload_influxdb_batch(write_api):
     batch_upload_timer = threading.Timer(upload_interval, upload_influxdb_batch, [write_api])
     batch_upload_timer.setDaemon(True)
     batch_upload_timer.start()
+    
 
 # main function
 if __name__ == "__main__":

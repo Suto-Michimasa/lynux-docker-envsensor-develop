@@ -264,13 +264,13 @@ class SensorBeacon:
         # データポイントをリストに追加
         data_points.append(point)
 
-        # 最新データを更新
-        address = self.bt_address
-        latest_data[address] = {
-            "noise": self.val_noise,
-            "time" :  self.tick_last_update.isoformat()
-        }
-        
+        # Check if the address already exists in the dictionary
+        if self.bt_address in latest_data:
+            # If it exists, append the new noise data to the existing list
+            latest_data[self.bt_address].append(self.val_noise)
+        else:
+            # If it doesn't exist, create a new entry with the new noise data
+            latest_data[self.bt_address] = [self.val_noise]
 
     def debug_print(self):
         print ("\tgateway = ", self.gateway)
