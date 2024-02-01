@@ -67,13 +67,17 @@ const LabCanvas: React.FC = () => {
 
   const labImageAspectRatio = 3960 / 2225;
   const { height, width } = useWindowSize();
-
+  console.log(height, width); 12
   // 研究室画像サイズ
   const labImageWidth = labImageAspectRatio * height;
   const labImageHeight = width / labImageAspectRatio;
   const labImageSize = {
     height: labImageWidth > width ? height : labImageHeight,
     width: labImageWidth > width ? labImageWidth : width,
+  };
+  const sensorSize = {
+    height: labImageSize.width * 0.01215,
+    width: labImageSize.width * 0.01215,
   };
   return (
     <div

@@ -40,7 +40,7 @@ export const SensorPositions: SensorPosition[] = [
     count: 6,
     deltaX: 0.178,
     sensorPositionNumber: 5,
-    x1: 0.045,
+    x1: 0.047,
     y: 0.28,
   }),
   
@@ -48,19 +48,19 @@ export const SensorPositions: SensorPosition[] = [
   {
     number: 11,
     x: 0.080,
-    y: 0.63,
+    y: 0.62,
   },
 
   {
     number: 12,
-    x: 0.25,
-    y: 0.63,
+    x: 0.248,
+    y: 0.62,
   },
 
   {
     number: 13,
-    x: 0.376,
-    y: 0.63,
+    x: 0.373,
+    y: 0.62,
   },
 
   {

@@ -1,12 +1,12 @@
-import styles from "./page.module.css";
-import SensorData from "@/app/components/sensorData";
-
-export default function Home() {
+'use client'
+import React from 'react';
+import LabCanvas from '@/app/feature/room/lab-canvas';
+const RoomPage: React.FC = () => {
   return (
-    <main className={styles.main}>
-      <div className={styles.center}>
-        <SensorData />
-      </div>
-    </main>
+    <div>
+      <LabCanvas />
+    </div>
   );
 }
+
+export default RoomPage;
