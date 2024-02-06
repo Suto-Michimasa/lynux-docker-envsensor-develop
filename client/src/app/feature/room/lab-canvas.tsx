@@ -1,14 +1,17 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import { ref, child, get } from "firebase/database";
 import Image from 'next/image'
 import { useWindowSize } from "usehooks-ts";
+import { format, parseISO } from 'date-fns';
+
+import { db } from "@/lib/firebase/firebase";
 import { SensorPositions, SensorPosition } from "./data/sensor-position"
 import { AddressAndNumber } from "./data/address"
-import { ref, child, get } from "firebase/database";
-import { db } from "@/lib/firebase/firebase";
+import NoiseChart from "./noise-chart";
+import { fetchLastHourData, transformData } from './data/firebase';
 import { getBackgroundColor, checkOnline } from "./logic";
 import Modal from './modal';
-import { format, parseISO } from 'date-fns';
 
 interface SensorData {
   [address: string]: {
@@ -25,25 +28,29 @@ const LabCanvas: React.FC = () => {
     noise: number;
     time: string;
   } | null>(null);
+  const [chartData, setChartData] = useState<{ time: string; noise: number }[]>([]);
   // modalを展開した際に詳細データを表示する
-  const openModal = (address: string) => {
-    setOpen(true);
-    // addressに対応するデータを取得
-    const detail = data[address];
-    const time = detail?.time || '';
-    const formattedTime = format(parseISO(time), 'yyyy/MM/dd HH:mm:ss');
-    // データが存在する場合
-    if (detail) {
-      // データを表示する
-      setSelectedSensor({
-        address,
-        noise: detail.noise,
-        time: formattedTime,
-      });
 
+  const openModal = async (address: string) => {
+    setOpen(true);
+    const detail = data[address];
+    setSelectedSensor({
+      address,
+      noise: Number(Number(detail.noise).toFixed(2)),
+      time: format(parseISO(detail.time), 'yyyy/MM/dd HH:mm:ss'),
+    });
+
+    try {
+      const rawData = await fetchLastHourData(address);
+      if (rawData) {
+        // 取得したデータを変換
+        const chartData = transformData(rawData);
+        setChartData(chartData);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
   }
-
   useEffect(() => {
     const fetchData = () => {
       const dbRef = ref(db);
@@ -61,23 +68,17 @@ const LabCanvas: React.FC = () => {
 
     fetchData();
     const interval = setInterval(fetchData, 5000); // Fetch data every 5 seconds
-
     return () => clearInterval(interval); // Clear interval on component unmount
   }, []);
 
   const labImageAspectRatio = 3960 / 2225;
   const { height, width } = useWindowSize();
-  console.log(height, width); 12
   // 研究室画像サイズ
   const labImageWidth = labImageAspectRatio * height;
   const labImageHeight = width / labImageAspectRatio;
   const labImageSize = {
     height: labImageWidth > width ? height : labImageHeight,
     width: labImageWidth > width ? labImageWidth : width,
-  };
-  const sensorSize = {
-    height: labImageSize.width * 0.01215,
-    width: labImageSize.width * 0.01215,
   };
   return (
     <div
@@ -128,11 +129,12 @@ const LabCanvas: React.FC = () => {
             <>
               <p className="text-lg">番号: {selectedSensor.address}</p>
               <p className="text-lg">時間: {selectedSensor.time}</p>
-              <p className="text-lg">音量: {selectedSensor.noise}</p>
+              <p className="text-lg">音量: {selectedSensor.noise} (db)</p>
             </>
           ) : (
             <p className="text-lg">No sensor data available.</p>
           )}
+          <NoiseChart data={chartData} />
           <hr className="border-t-solid border-1 border-grey" />
           <div className="flex flex-row justify-center">
             <button
